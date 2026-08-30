@@ -100,10 +100,13 @@ Todo se anuncia por MQTT discovery. Aparece un dispositivo **Gabinete ASL** con:
   configurados, también el tiempo de transmisión y el ciclo de trabajo de cada
   radio, que sirven para normalizar comparaciones térmicas entre días.
 - **Alarmas** — «Falla de sensor», «Ventilador trabado» y «Control desde la Pi».
-- **Salud del SoC** — la palabra de `vcgencmd get_throttled` desglosada: bajo
-  voltaje, frenado y límite térmico, cada uno como estado actual y como
-  histórico, más la palabra cruda. Los históricos **no se apagan hasta reiniciar
-  la Pi**: son cicatrices, no alarmas activas.
+- **Salud del SoC** — la palabra de `vcgencmd get_throttled` desglosada en sus
+  cuatro causas: bajo voltaje, frecuencia limitada, frenado y límite térmico,
+  cada una como estado actual y como histórico, más la palabra cruda. Los
+  históricos **no se apagan hasta reiniciar la Pi**: son cicatrices, no alarmas
+  activas. También el voltaje del núcleo y el reloj del ARM — este último sube y
+  baja solo con el gobernador `ondemand`, entre 600 y 1400 MHz, así que verlo
+  bajo en reposo es normal y no indica throttling.
 - **Ajustes** — umbrales de arranque, crítico y paro de los radios, arranque y
   paro por CPU, histéresis, tiempo de purga y duty manual.
 - **Modo** — `auto`, `manual`, o `respaldo`.

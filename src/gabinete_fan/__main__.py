@@ -10,7 +10,7 @@ import time
 
 from .config import ParamStore, load_config
 from .controller import ThermalController
-from .sensors import Reading, SensorSet
+from .sensors import Reading, SensorSet, SocInfo
 
 log = logging.getLogger("gabinete")
 
@@ -83,6 +83,9 @@ class SimSensors:
 
     def throttled(self) -> int | None:
         return self.real.throttled()  # esta tambien
+
+    def soc(self):
+        return self.real.soc()        # y todo lo del SoC
 
 
 def parse_sim_temps(spec: str) -> list[tuple[float, float]]:
@@ -167,10 +170,9 @@ class Service:
 
                 readings = self.sensors.read_all()
                 params = self.params.params
-                # Una sola lectura por vuelta: la CPU ahora entra al lazo de
-                # control, y `throttled` cuesta un fork de vcgencmd.
-                cpu = self.sensors.cpu_temp()
-                thr = self.sensors.throttled()
+                # Una sola lectura del SoC por vuelta: la CPU entra al lazo de
+                # control y el resto es telemetria.
+                soc = self.sensors.soc()
 
                 # En modo respaldo la Pi suelta el mando a proposito: se detiene el
                 # latido, los relevadores caen a NC y el controlador original manda.
@@ -181,7 +183,7 @@ class Service:
                     decision_state, duty, reason = "respaldo", 0.0, "control manual del respaldo"
                     self.fan.apply(0.0)
                 else:
-                    decision = self.control.update(readings, params, dt, cpu=cpu)
+                    decision = self.control.update(readings, params, dt, cpu=soc.cpu)
                     decision_state, reason = decision.state, decision.reason
                     duty = self.fan.apply(decision.duty)
 
@@ -193,7 +195,7 @@ class Service:
                     self.asl.sample()
 
                 self._publish(readings, params, decision_state, duty, reason,
-                              rpm, trabado, cpu, thr)
+                              rpm, trabado, soc)
 
                 # Solo se refresca el watchdog tras completar la iteracion: si el
                 # lazo se traba a medio camino, el respaldo entra por si solo.
@@ -213,8 +215,8 @@ class Service:
 
     def _publish(self, readings: dict[str, Reading], params, state: str,
                  duty: float, reason: str, rpm: float | None = None,
-                 trabado: bool = False, cpu: float | None = None,
-                 thr: int | None = None) -> None:
+                 trabado: bool = False, soc: SocInfo | None = None) -> None:
+        soc = soc or SocInfo()
         now = time.monotonic()
         if not self.bridge or (now - self._last_log) >= self.LOG_EVERY_SECONDS:
             self._last_log = now
@@ -222,7 +224,8 @@ class Service:
             log.info("%-9s duty=%5.1f%%  rpm=%s  vhf=%s  tx10m=%s  cpu=%s  thr=%s%s | %s",
                      state, duty, "  n/d" if rpm is None else f"{rpm:5.0f}",
                      _fmt(readings["vhf"].celsius), _fmt(readings["tx10m"].celsius),
-                     _fmt(cpu), "n/d" if thr is None else f"0x{thr:x}", tx, reason)
+                     _fmt(soc.cpu), "n/d" if soc.throttled is None else f"0x{soc.throttled:x}",
+                     tx, reason)
         if not self.bridge:
             return
 
@@ -230,24 +233,28 @@ class Service:
         # Palabra de throttling del SoC. Los bits bajos son el estado AHORA; los
         # altos son "ocurrio desde el arranque" y no se apagan hasta reiniciar.
         #   bit 0 / 16 : bajo voltaje          bit 2 / 18 : frenado (cualquier causa)
-        #   bit 3 / 19 : limite termico suave
+        #   bit 1 / 17 : frecuencia limitada   bit 3 / 19 : limite termico suave
         # Publicar solo el 3 y el 19 dejaba invisible el bajo voltaje: el 30 de
         # agosto la Pi estuvo en 0x50000 -bajo voltaje y frenado- con las dos
         # entidades de HA en verde.
-        w = thr or 0
+        w = soc.throttled or 0
         payload = {
             "state": state,
             "reason": reason,
             "temp_vhf": _round(readings["vhf"].celsius),
             "temp_tx10m": _round(readings["tx10m"].celsius),
-            "temp_cpu": _round(cpu),
+            "temp_cpu": _round(soc.cpu),
             "cpu_throttling": "true" if w & 0x8 else "false",
             "cpu_throttled_ever": "true" if w & 0x80000 else "false",
             "undervoltage": "true" if w & 0x1 else "false",
             "undervoltage_ever": "true" if w & 0x10000 else "false",
             "throttled_now": "true" if w & 0x4 else "false",
             "throttled_ever": "true" if w & 0x40000 else "false",
-            "throttled_word": "n/d" if thr is None else f"0x{thr:x}",
+            "freq_capped": "true" if w & 0x2 else "false",
+            "freq_capped_ever": "true" if w & 0x20000 else "false",
+            "throttled_word": "n/d" if soc.throttled is None else f"0x{soc.throttled:x}",
+            "core_volts": _round(soc.volts, 3),
+            "arm_mhz": _round(soc.mhz, 0),
             "fan_duty": round(duty, 1),
             "fan_rpm": _round(rpm, 0),
             "fan_stalled": "true" if trabado else "false",

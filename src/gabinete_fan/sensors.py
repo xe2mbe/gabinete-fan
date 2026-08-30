@@ -18,6 +18,22 @@ class Reading:
     error: str = ""
 
 
+@dataclass
+class SocInfo:
+    """Salud del SoC: temperatura, throttling, voltaje de nucleo y reloj.
+
+    OJO con `volts`: es el riel INTERNO del nucleo, no los 5 V de entrada. La
+    Pi 3B+ no expone la tension de alimentacion por ningun lado -`pmic_read_adc`
+    solo existe en la Pi 4 y 5-, asi que el bajo voltaje solo se puede detectar
+    por sus consecuencias: los bits de `throttled` y la caida del reloj.
+    """
+
+    cpu: float | None = None
+    throttled: int | None = None
+    volts: float | None = None
+    mhz: float | None = None
+
+
 class DS18B20:
     """Un sensor del bus 1-Wire, leido via w1_slave del kernel.
 
@@ -133,6 +149,41 @@ class SensorSet:
             return int(salida.split("=")[1], 16)
         except (OSError, ValueError, IndexError, subprocess.SubprocessError):
             return None
+
+    # Reloj actual del ARM. Sale de sysfs y no de vcgencmd para no forkear un
+    # proceso por vuelta: es el numero que delata el throttling, porque cuando
+    # el SoC se frena -por calor o por bajo voltaje- esto cae de su maximo.
+    ARM_CLOCK_PATH = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
+    ARM_MAX_PATH = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
+
+    @classmethod
+    def arm_mhz(cls) -> float | None:
+        try:
+            with open(cls.ARM_CLOCK_PATH, "r", encoding="ascii") as fh:
+                return int(fh.read().strip()) / 1000.0
+        except (OSError, ValueError):
+            return None
+
+    @staticmethod
+    def core_volts() -> float | None:
+        """Tension del nucleo del SoC, en volts.
+
+        NO es la alimentacion de 5 V: es un riel interno regulado que se mueve
+        con el punto de operacion del procesador. Sirve para ver como respira el
+        SoC, no para diagnosticar la fuente.
+        """
+        import subprocess
+        try:
+            salida = subprocess.run(["vcgencmd", "measure_volts", "core"],
+                                    capture_output=True, text=True, timeout=5).stdout
+            return float(salida.strip().split("=")[1].rstrip("Vv"))
+        except (OSError, ValueError, IndexError, subprocess.SubprocessError):
+            return None
+
+    def soc(self) -> SocInfo:
+        """Todo lo del SoC de una vez, para leerlo una sola vez por vuelta."""
+        return SocInfo(cpu=self.cpu_temp(), throttled=self.throttled(),
+                       volts=self.core_volts(), mhz=self.arm_mhz())
 
     @staticmethod
     def discover(bus_path: str = "/sys/bus/w1/devices") -> list[str]:

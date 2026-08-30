@@ -243,10 +243,16 @@ quieres, o restaura el respaldo `config.txt.gabinete-bak`.
 | No aparece en Home Assistant | ¿Llega al broker? `journalctl -u gabinete-fan | grep MQTT`. Revisa host, usuario y contraseña |
 | `No se puede leer … hace falta sudo` | La configuración es `640` porque lleva la contraseña. Corre con `sudo` |
 
-Para ver la palabra de throttling desglosada —bajo voltaje, frenado, límite
-térmico, cada uno como estado actual e histórico— mira las entidades de
-diagnóstico en Home Assistant. Los históricos **no se apagan hasta reiniciar la
-Pi**: son cicatrices, no alarmas activas.
+Para ver la palabra de throttling desglosada —bajo voltaje, frecuencia
+limitada, frenado y límite térmico, cada uno como estado actual e histórico—
+mira las entidades de diagnóstico en Home Assistant. Los históricos **no se
+apagan hasta reiniciar la Pi**: son cicatrices, no alarmas activas.
+
+> **La Raspberry Pi 3B+ no puede medir su voltaje de entrada.** `vcgencmd` solo
+> expone rieles internos regulados, y `pmic_read_adc` —que sí daría los 5 V
+> reales— existe únicamente en la Pi 4 y 5. El bajo voltaje solo se detecta por
+> sus consecuencias, que son justamente esos bits. Para medirlo de verdad hace
+> falta un INA219 o un ADS1115 por I²C en el riel de 5 V.
 
 ---
 

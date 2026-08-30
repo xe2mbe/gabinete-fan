@@ -234,6 +234,25 @@ class HomeAssistantBridge:
             "entity_category": "diagnostic",
             "icon": "mdi:flash-alert-outline",
         })
+        # El complemento del sensor de reloj: ese sube y baja solo con el
+        # gobernador, y esto dice si ademas le estan poniendo un techo.
+        self._publish_entity("binary_sensor", "frecuencia_limitada", {
+            "name": "Frecuencia limitada",
+            "value_template": "{{ value_json.freq_capped }}",
+            "payload_on": "true",
+            "payload_off": "false",
+            "device_class": "problem",
+            "icon": "mdi:speedometer-medium",
+        })
+        self._publish_entity("binary_sensor", "frecuencia_limitada_ever", {
+            "name": "Hubo frecuencia limitada",
+            "value_template": "{{ value_json.freq_capped_ever }}",
+            "payload_on": "true",
+            "payload_off": "false",
+            "device_class": "problem",
+            "entity_category": "diagnostic",
+            "icon": "mdi:speedometer-medium",
+        })
         self._publish_entity("binary_sensor", "frenada_ahora", {
             "name": "CPU frenada (cualquier causa)",
             "value_template": "{{ value_json.throttled_now }}",
@@ -251,6 +270,33 @@ class HomeAssistantBridge:
             "entity_category": "diagnostic",
             "icon": "mdi:history",
         })
+        # Voltaje del NUCLEO, no la alimentacion. La Pi 3B+ no expone los 5 V de
+        # entrada por ningun lado (pmic_read_adc solo existe en la Pi 4 y 5), asi
+        # que el bajo voltaje se detecta por sus consecuencias: los bits de
+        # throttling y la caida del reloj de abajo.
+        self._publish_entity("sensor", "core_volts", {
+            "name": "Voltaje del nucleo",
+            "value_template": "{{ value_json.core_volts }}",
+            "device_class": "voltage",
+            "state_class": "measurement",
+            "unit_of_measurement": "V",
+            "icon": "mdi:sine-wave",
+            "entity_category": "diagnostic",
+        })
+        # OJO al interpretarlo: con el gobernador `ondemand` este numero sube y
+        # baja solo con la carga -en la 3B+ salta entre 600 y 1400 MHz en nueve
+        # escalones- asi que verlo bajo en reposo es lo NORMAL, no una falla.
+        # Quien dice de verdad si el SoC esta frenado son los bits de throttling.
+        # Este sirve para cruzarlo contra la temperatura en una grafica.
+        self._publish_entity("sensor", "arm_mhz", {
+            "name": "Reloj de la CPU",
+            "value_template": "{{ value_json.arm_mhz }}",
+            "device_class": "frequency",
+            "state_class": "measurement",
+            "unit_of_measurement": "MHz",
+            "icon": "mdi:speedometer",
+        })
+
         # La palabra cruda, para que ningun bit vuelva a quedar invisible.
         self._publish_entity("sensor", "throttled_word", {
             "name": "Palabra de throttling",
