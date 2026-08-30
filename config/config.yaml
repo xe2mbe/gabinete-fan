@@ -1,0 +1,118 @@
+# ---------------------------------------------------------------------------
+# gabinete-fan  -  control termico del gabinete ASL
+# Los valores marcados [HA] pueden cambiarse en caliente desde Home Assistant
+# y se persisten en state_file (tienen prioridad sobre este archivo).
+# ---------------------------------------------------------------------------
+
+mqtt:
+  # Las direcciones de esta seccion son un EJEMPLO que ilustra un caso comun:
+  # el broker no es alcanzable directamente y hace falta un salto. Pon las de
+  # tu red. Si tu broker si es alcanzable, basta con poner su IP en `host`.
+  #
+  # El broker es el add-on Mosquitto de Home Assistant, que vive en la LAN de
+  # casa (192.168.10.20) y NO es alcanzable directamente desde esta Pi.
+  #
+  #   esta Pi (10.0.0.2) --wg0--> servidor WireGuard --> nodo puente
+  #   el puente tiene wg0=10.0.0.5 y eth0=192.168.10.4, y hace DNAT del
+  #   puerto 1883 hacia 192.168.10.20:1883 (reglas PostUp de su wg0.conf).
+  #
+  # Por eso el host correcto aqui es 10.0.0.5, no la IP real de Home Assistant.
+  host: 10.0.0.5
+  port: 1883
+  username: gabinete       # usuario creado en el add-on Mosquitto de HA
+  password: "CAMBIAME"
+  base_topic: gabinete
+  discovery_prefix: homeassistant
+  client_id: gabinete-fan
+  keepalive: 30
+
+sensors:
+  poll_seconds: 5
+  bus_path: /sys/bus/w1/devices
+  # Corre  `ls /sys/bus/w1/devices`  y pega aqui los IDs reales (28-xxxxxxxxxxxx)
+  vhf:
+    id: "28-000000000000"
+    label: "Radio VHF"
+  tx10m:
+    id: "28-000000000001"
+    label: "TX 10M"
+  max_consecutive_errors: 3   # tras N fallos seguidos -> estado FALLO (ventilador 100%)
+  sane_min_c: -20.0
+  sane_max_c: 110.0
+
+fan:
+  pwm_chip: auto            # auto | 0 | 2 ...   (Pi5 = pwmchip2, Pi<=4 = pwmchip0)
+  pwm_channel: 0            # GPIO18 = PWM0
+  pwm_hz: 25000             # spec Intel 4-wire / igual que tu controlador
+  # true con buffer 2N7002 (open-drain, invierte). false si GPIO18 va directo
+  # al pin 4 del ventilador.
+  invert: false
+  max_duty: 100
+  # Patada de arranque innecesaria en este ventilador: arranca a cualquier duty.
+  spinup_duty: 100
+  spinup_seconds: 0
+  # CONFIRMADO NECESARIO por --fan-test: con PWM en 0% el ventilador sigue a
+  # 1010 RPM, no se detiene. Para pararlo hay que cortarle los +12 V con el
+  # MOSFET de canal P del lado alto. Poner 24 cuando esa etapa este armada.
+  power_gpio: null
+  power_active_high: true
+  tach_gpio: 23             # null si no cableas el tacometro a la Pi
+  tach_pulses_per_rev: 2
+  # Alarma de ventilador trabado: si se pide duty > 0 y el tacometro se
+  # queda por debajo de stall_rpm durante stall_grace_seconds seguidos,
+  # se levanta la alerta en Home Assistant. Solo se vigila con duty > 0:
+  # en reposo las RPM legitimas dependen del montaje.
+  stall_rpm: 300
+  stall_grace_seconds: 20
+
+watchdog:
+  heartbeat_gpio: 25        # -> charge pump -> bobinas de RLY1 y RLY2 (modo)
+  heartbeat_hz: 10
+  # Ventana de expiracion del latido. TIENE que ser mayor que poll_seconds o
+  # el mando oscila entre la Pi y el respaldo; el codigo la eleva sola si se
+  # queda corta. Con poll de 5 s, 15 da margen para dos sondeos y un tropiezo.
+  stale_after_seconds: 15
+
+control:
+  t_on: 42.0                # [HA] arranca ventilador si CUALQUIER radio supera esto
+  t_critical: 50.0          # [HA] 100% de revoluciones
+  t_off: 38.0               # [HA] por debajo de esto empieza la purga
+  hysteresis: 2.0           # [HA] evita chatter al salir de CRITICO
+  purge_minutes: 3.0        # [HA] purga a 100% tras caer bajo t_off
+  mode: auto                # [HA] auto | manual | respaldo
+  manual_duty: 60           # [HA] duty usado en modo manual
+  # [HA] Temperatura de CPU a la que el ventilador se va al 100% AUNQUE los
+  # radios esten frios. Medido en la torre el 30-ago: con sol y sin trafico los
+  # radios se quedaron en 34 C mientras la CPU subio a 57.5 C, y el ventilador
+  # nunca arranco porque el lazo solo miraba los radios.
+  # Al maximo y no por rampa: de aqui al limite del SoC (60 C) quedan cinco
+  # grados, y la curva de este ventilador tiene zona muerta -a 40% da 1800 RPM
+  # contra un piso de 1725-, asi que los duties intermedios no mueven la aguja.
+  t_cpu: 55.0
+  # [HA] Temperatura a la que deja de soplar por la Pi. Umbral propio, no
+  # t_cpu menos la histeresis de los radios. Ojo al ancho: la CPU se lee en
+  # escalones de ~0.5 C, y medido sobre la traza del 30-ago en la torre, parar
+  # en 54 en vez de 53 no ahorra tiempo encendido (41% contra 42%) y si mete
+  # ciclos de arranque de minuto y medio. Para bajar el tiempo encendido sube
+  # t_cpu, no este: con arranque en 56 el ventilador corre 35% del tiempo.
+  t_cpu_off: 53.0
+  # [HA] Duty donde arranca la rampa al cruzar t_on. Ojo: si tu ventilador
+  # tiene zona muerta (el de este gabinete no responde abajo de ~35%), este
+  # valor tiene que quedar arriba de ella o los primeros grados de rampa no
+  # mueven nada de aire.
+  min_duty: 40
+
+# Estadisticas de transmision de AllStarLink. Sirven para normalizar las
+# comparaciones termicas: sin saber cuanto transmitio el radio, comparar el pico
+# de dos nets distintas no dice nada.
+asl:
+  asterisk_bin: /usr/sbin/asterisk
+  refresh_seconds: 60
+  # Las etiquetas son las mismas que las de sensors:, para poder cruzar la
+  # temperatura de cada radio con su propio ciclo de transmision.
+  nodes:
+    vhf: 1001               # Kenwood TK-780, fob en usb-1.1.2
+    tx10m: 1002             # TX del repetidor de 10 M, fob en usb-1.1.3
+
+state_file: /var/lib/gabinete-fan/state.json
+log_level: INFO

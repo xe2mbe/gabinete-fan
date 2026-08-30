@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Configuración con credenciales reales.
+# El repo lleva config/config.yaml como plantilla; la copia que de verdad
+# se usa vive en /etc/gabinete-fan/config.yaml en la Raspberry Pi y trae la
+# contraseña del broker MQTT. Nunca la subas.
+config/config.local.yaml
+*.local.yaml
+
+# Estado en caliente del servicio (lo escribe la Pi, no el repo)
+state.json
+
+# Capturas de telemetría para análisis térmico
+*.csv
+
+# Sistema operativo
+Thumbs.db
+.DS_Store

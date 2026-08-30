@@ -1,0 +1,10 @@
+# En Debian 13 (trixie) instala con apt, no con pip: el entorno es
+# externally-managed (PEP 668) y estos paquetes ya existen empaquetados.
+#
+#   sudo apt install python3-yaml python3-paho-mqtt python3-gpiozero python3-lgpio
+#
+# Las versiones de abajo son solo para entornos de desarrollo con virtualenv.
+PyYAML>=6.0
+paho-mqtt>=1.6
+gpiozero>=2.0
+lgpio>=0.2

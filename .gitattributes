@@ -1,0 +1,9 @@
+# Este proyecto corre en Linux (Raspberry Pi) aunque se edite desde Windows.
+# Sin esto, un install.sh con finales de linea CRLF falla en la Pi con el
+# clasico "bad interpreter: /bin/bash^M".
+* text=auto eol=lf
+
+# Binarios, por si algun dia se agregan fotos del armado
+*.png binary
+*.jpg binary
+*.pdf binary

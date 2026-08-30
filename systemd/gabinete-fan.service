@@ -1,0 +1,36 @@
+[Unit]
+Description=Control termico del gabinete ASL (DS18B20 -> ventilador -> Home Assistant)
+Documentation=file:/opt/gabinete-fan/docs/hardware.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Se ejecuta como root porque exportar un canal PWM por sysfs lo exige.
+# Si prefieres un usuario dedicado, mira docs/hardware.md (reglas udev).
+User=root
+Environment=PYTHONUNBUFFERED=1
+Environment=GABINETE_CONFIG=/etc/gabinete-fan/config.yaml
+ExecStart=/usr/bin/python3 -m gabinete_fan
+WorkingDirectory=/opt/gabinete-fan
+Environment=PYTHONPATH=/opt/gabinete-fan/src
+
+Restart=always
+RestartSec=5
+# Margen para que el servicio avise a HA, apague el PWM y suelte el watchdog.
+# Si se excede, SIGKILL: el latido cesa igual y el respaldo toma el ventilador.
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+# Endurecimiento. No se usa ProtectSystem=strict porque hace falta escribir en
+# /sys/class/pwm y en /var/lib/gabinete-fan.
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+StateDirectory=gabinete-fan
+
+[Install]
+WantedBy=multi-user.target
