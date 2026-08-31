@@ -34,13 +34,14 @@ echo "==> Generando audios"
 
 cat <<FIN
 
-Listo. El vigilante del tunel los usara solo, pero pruebalos antes:
+Listo. El vigilante del tunel los usara solo, pero pruebalo antes:
 
-  1. Escuchar en la Pi, SIN transmitir:
-       play /usr/share/asterisk/sounds/custom/alerta-sin_internet.ulaw
+  sudo /usr/local/sbin/radio-alerta.sh sin_internet
 
-  2. Sacarlo AL AIRE por el nodo (esto SI transmite):
-       sudo /usr/local/sbin/radio-alerta.sh sin_internet
+Eso transmite: el anuncio sale por app_rpt (rpt localplay) hacia el nodo, es
+decir por el FOB USB del radio. No intentes oirlo con `play` en la Pi: eso
+usaria la tarjeta de sonido, que ademas esta apagada porque el instalador del
+ventilador libero PWM0/PWM1 desactivando el audio analogico.
 
 Si cambias el numero de nodo, edita NODO en /usr/local/sbin/radio-alerta.sh
 Si cambias los textos, edita /etc/radio-alerta/frases.conf y vuelve a correr

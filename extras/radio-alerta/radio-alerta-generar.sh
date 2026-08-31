@@ -37,5 +37,9 @@ done < "$FRASES"
 
 echo
 echo "$n audios generados."
-echo "Probar uno SIN transmitir:  play $DESTINO/alerta-sin_internet.ulaw"
-echo "Probar AL AIRE:             sudo /usr/local/sbin/radio-alerta.sh sin_internet"
+echo "Probar al aire:  sudo /usr/local/sbin/radio-alerta.sh sin_internet"
+echo
+echo "El anuncio sale por app_rpt hacia el nodo (rpt localplay), o sea por el"
+echo "FOB USB del radio. NO por la tarjeta de sonido de la Pi, que ademas esta"
+echo "apagada: el instalador del ventilador libero PWM0/PWM1 desactivando el"
+echo "audio analogico. Para oirlo sin transmitir, copia el .ulaw a otra maquina."

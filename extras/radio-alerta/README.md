@@ -84,15 +84,21 @@ los scripts funcionan igual pero hay que llamarlos a mano.
 ## Probar
 
 ```bash
-# escuchar en la Pi, SIN transmitir
-play /usr/share/asterisk/sounds/custom/alerta-sin_internet.ulaw
-
-# sacarlo AL AIRE por el nodo — esto SÍ transmite
+# sacarlo al aire por el nodo — esto transmite
 sudo /usr/local/sbin/radio-alerta.sh sin_internet
 
 # ver qué ha anunciado
 journalctl -t radio-alerta --since today
 ```
+
+El anuncio sale por **app_rpt** (`rpt localplay <nodo> <archivo>`) hacia el
+canal del nodo, que es `SimpleUSB/1001` — el FOB conectado al radio.
+
+> **No intentes oírlo con `play` en la Pi.** Eso usaría la tarjeta de sonido y
+> no el radio, y de todos modos no funcionaría: el instalador del ventilador
+> desactiva el audio analógico para liberar PWM0 y PWM1, que es el hardware que
+> necesita el ventilador. Para escuchar un anuncio sin transmitir, copia el
+> `.ulaw` a otra máquina.
 
 ## Cambiar los textos
 
