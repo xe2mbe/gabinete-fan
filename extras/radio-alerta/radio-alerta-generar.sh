@@ -48,7 +48,8 @@ while IFS='|' read -r clave texto; do
     clave="${clave// }"
 
     if [[ $MOTOR == piper ]]; then
-        printf '%s\n' "$texto" | piper -m "$VOZ_PIPER" -f "$tmp/x.wav" 2>/dev/null
+        # piper anuncia en stdout el archivo que escribio; estorba en el reporte
+        printf '%s\n' "$texto" | piper -m "$VOZ_PIPER" -f "$tmp/x.wav" >/dev/null 2>&1
     else
         espeak-ng -v "$VOZ_ESPEAK" -s "$VELOCIDAD" -w "$tmp/x.wav" "$texto"
     fi
