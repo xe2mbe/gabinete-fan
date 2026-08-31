@@ -31,7 +31,10 @@ ANUNCIAR="${ANUNCIAR:-1}"
 ANUNCIADOR="${ANUNCIADOR:-/usr/local/sbin/radio-alerta.sh}"
 ANUNCIAR_TRAS="${ANUNCIAR_TRAS:-3}"    # revisiones seguidas antes del 1er aviso
 REPETIR_CADA="${REPETIR_CADA:-15}"     # revisiones entre repeticiones
-MAX_ANUNCIOS="${MAX_ANUNCIOS:-12}"     # tope: no acaparar el repetidor sin fin
+# Tope de avisos por episodio: 12 son unas tres horas a razon de uno cada 15
+# min. Si en tres horas nadie fue, seguir gritando no ayuda y el repetidor lo
+# usan otros. MAX_ANUNCIOS=0 lo deja sin tope, avisando hasta que vuelva.
+MAX_ANUNCIOS="${MAX_ANUNCIOS:-12}"
 
 # Reinicio de la Pi como ultimo recurso. APAGADO: en un nodo de repetidor un
 # reinicio lo saca del aire, y esa decision es del operador, no de un script.
@@ -120,11 +123,16 @@ fi
 # -- anunciar por radio ------------------------------------------------------
 # Se espera a confirmar la falla antes de salir al aire: un parpadeo de treinta
 # segundos no merece ocupar el repetidor.
-if [ "$fallos" -ge "$ANUNCIAR_TRAS" ] && [ "$anuncios" -lt "$MAX_ANUNCIOS" ] &&
+if [ "$fallos" -ge "$ANUNCIAR_TRAS" ] &&
+   { [ "$MAX_ANUNCIOS" -eq 0 ] || [ "$anuncios" -lt "$MAX_ANUNCIOS" ]; } &&
    { [ "$ultimo_anuncio" -eq 0 ] || [ $(( fallos - ultimo_anuncio )) -ge "$REPETIR_CADA" ]; }; then
     anuncios=$(( anuncios + 1 ))
     ultimo_anuncio="$fallos"
-    log "anunciando '$clase' por radio [aviso $anuncios de $MAX_ANUNCIOS]"
+    if [ "$MAX_ANUNCIOS" -eq 0 ]; then
+        log "anunciando '$clase' por radio [aviso $anuncios, sin tope]"
+    else
+        log "anunciando '$clase' por radio [aviso $anuncios de $MAX_ANUNCIOS]"
+    fi
     anunciar "$clase"
 fi
 

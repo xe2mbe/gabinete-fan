@@ -40,6 +40,14 @@ igual, pero suena a robot.
 
 ## Qué anuncia
 
+Cada anuncio va envuelto en un **tono de atención**: dos pares alternados de
+1200 y 900 Hz al entrar, y un par descendente al salir. Los tonos se sintetizan
+con `sox` —deterministas, sin API ni credenciales— y llevan un desvanecido de
+8 ms en los bordes, que no es adorno: un seno que arranca y corta en seco
+produce un chasquido que en RF se oye peor que el tono mismo.
+
+Con tonos, un anuncio queda en unos 6 segundos. `TONO=0` los desactiva.
+
 Tres frases, en `/etc/radio-alerta/frases.conf`:
 
 | Clave | Cuándo |
@@ -62,7 +70,8 @@ va en el vigilante del túnel y está medida:
   ocupar el repetidor.
 - **Repite cada 15 minutos**, no cada minuto.
 - **Se calla tras 12 avisos** —unas tres horas— aunque la falla siga. Si en tres
-  horas nadie fue, no va a servir seguir gritando.
+  horas nadie fue, no va a servir seguir gritando y el repetidor lo usan otros.
+  Con `MAX_ANUNCIOS=0` avisa sin tope hasta que el enlace vuelva.
 - **Solo anuncia la recuperación si llegó a anunciar la falla.** Si nadie la
   oyó, avisar que ya se arregló es ruido.
 - Un cambio en la clase de falla reinicia el conteo: es otra falla y merece su
