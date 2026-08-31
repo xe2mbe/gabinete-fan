@@ -1,0 +1,10 @@
+[Unit]
+Description=Revision del tunel WireGuard hacia Home Assistant
+After=network-online.target wg-quick@wg0.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vpn-watchdog.sh
+# Nunca debe tumbar nada mas si falla: es un vigilante, no un servicio critico.
+SuccessExitStatus=0

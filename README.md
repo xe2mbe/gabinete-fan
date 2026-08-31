@@ -78,6 +78,7 @@ calibrar los umbrales y qué hacer cuando algo no sale— está en
 | **[docs/instalacion.md](docs/instalacion.md)** | Puesta en marcha paso a paso, actualización y solución de problemas |
 | **[docs/arquitectura.md](docs/arquitectura.md)** | Diagramas: máquina de estados, piso de CPU, lazo de control, telemetría |
 | **[docs/hardware.md](docs/hardware.md)** | Cableado, pines, RF, curva medida del ventilador y modos de falla |
+| **[extras/vpn-watchdog](extras/vpn-watchdog/)** | Vigilante del túnel WireGuard, para que la telemetría vuelva sola tras un corte de enlace |
 
 ## Comandos
 

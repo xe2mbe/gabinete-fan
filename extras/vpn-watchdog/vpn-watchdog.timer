@@ -1,0 +1,13 @@
+[Unit]
+Description=Revisa el tunel WireGuard cada minuto
+
+[Timer]
+# Margen tras el arranque: el enlace 4G tarda en negociar, y revisar antes
+# solo produciria un reinicio inutil del tunel.
+OnBootSec=3min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Persistent=false
+
+[Install]
+WantedBy=timers.target
