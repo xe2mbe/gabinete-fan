@@ -13,22 +13,30 @@ cualquier síntesis de voz en la nube — incluido el pipeline con ElevenLabs de
 [AllVox](https://github.com/xe2mbe/AllVox), que es la opción obvia y que fallaría
 justo en el momento en que hace falta.
 
-De ahí las dos decisiones centrales:
-
-- **Voz local**, con `espeak-ng`. Menos bonita, pero no depende de nadie.
-- **Audio pregenerado al instalar**, no en el momento de la falla. Cuando el
-  enlace se cae, lo único que ocurre es reproducir un archivo que ya existe: sin
-  síntesis, sin carga de CPU y sin depender de que `espeak-ng` funcione con el
-  sistema en problemas.
+Pero la restricción aplica a **reproducir**, no a **generar**. Y esos son dos
+momentos distintos:
 
 ```mermaid
 flowchart LR
-    A["frases.conf"] -->|"al INSTALAR"| B["espeak-ng"]
-    B --> C["sox<br/>8 kHz mono u-law"]
-    C --> D["alerta-*.ulaw"]
-    D -->|"en la FALLA"| E["rpt localplay"]
-    E --> F["Transmisor<br/>del nodo"]
+    subgraph I["Al INSTALAR · hay internet"]
+        A["frases.conf"] --> B["Piper<br/>red neuronal"]
+        B --> C["sox<br/>8 kHz mono u-law"]
+        C --> D["alerta-*.ulaw"]
+    end
+    subgraph F["En la FALLA · sin red"]
+        D --> E["rpt localplay"]
+        E --> G["FOB USB<br/>del nodo 1001"]
+    end
 ```
+
+Como la generación ocurre al instalar, **puede permitirse ser lenta y pesada**.
+Por eso el motor es **Piper**: red neuronal, 61 MB de modelo, unos 11 segundos
+por frase en una Pi 3B+. Nada de eso importa, porque corre una sola vez.
+
+En la falla no se sintetiza nada: solo se abre un archivo que ya existe.
+
+Si no hay modelo de Piper, el generador cae a `espeak-ng` y lo avisa. Funciona
+igual, pero suena a robot.
 
 ## Qué anuncia
 
@@ -75,8 +83,18 @@ cd extras/radio-alerta
 sudo ./install.sh
 ```
 
-Instala `espeak-ng` y `sox` si faltan, copia los scripts, escribe las frases en
-`/etc/radio-alerta/frases.conf` y **genera los audios**.
+Instala `sox` y `espeak-ng` si faltan, **descarga la voz de Piper** (61 MB,
+desde HuggingFace, a `/usr/share/radio-alerta/voces/`), copia los scripts,
+escribe las frases en `/etc/radio-alerta/frases.conf` y **genera los audios**.
+
+Para saltarse la descarga y quedarse con la voz robótica:
+
+```bash
+sudo SIN_PIPER=1 ./install.sh
+```
+
+Si la descarga falla, el instalador avisa y sigue con `espeak-ng`; se puede
+reintentar corriendo el instalador otra vez.
 
 Requiere el [vigilante del túnel](../vpn-watchdog/) para dispararse solo; sin él
 los scripts funcionan igual pero hay que llamarlos a mano.
@@ -108,7 +126,9 @@ sudo /usr/local/sbin/radio-alerta-generar.sh
 ```
 
 Manten las frases **por debajo de ocho segundos**. El generador imprime la
-duración de cada una para que sea fácil ajustarlas.
+duración de cada una para que sea fácil ajustarlas. Con Piper salen más cortas
+que con espeak —no arrastra las sílabas— así que al cambiar de motor conviene
+volver a mirarlas.
 
 Si tu nodo no es el 1001, edita `NODO` en `/usr/local/sbin/radio-alerta.sh`.
 
