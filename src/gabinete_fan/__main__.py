@@ -145,6 +145,15 @@ class Service:
         from .asl import AslNodes
         self.asl = AslNodes(cfg.get("asl") or {})
 
+        # Registro local: se escribe directo desde aqui, sin pasar por MQTT ni
+        # por la red, para que sobreviva a los cortes de enlace.
+        self.csvlog = None
+        tele = cfg.get("telemetria") or {}
+        if tele.get("csv_dir"):
+            from .csvlog import CsvLog
+            self.csvlog = CsvLog(tele["csv_dir"], tele.get("csv_prefix", "tx-"))
+            log.info("registro local de telemetria en %s", self.csvlog.ruta())
+
         self.bridge = None
         if use_mqtt:
             from .mqtt_ha import HomeAssistantBridge
@@ -226,7 +235,7 @@ class Service:
                      _fmt(readings["vhf"].celsius), _fmt(readings["tx10m"].celsius),
                      _fmt(soc.cpu), "n/d" if soc.throttled is None else f"0x{soc.throttled:x}",
                      tx, reason)
-        if not self.bridge:
+        if not self.bridge and not self.csvlog:
             return
 
         from dataclasses import asdict
@@ -264,7 +273,10 @@ class Service:
             **(self.asl.payload() if self.asl else {}),
             "params": asdict(params),
         }
-        self.bridge.publish_state(payload)
+        if self.bridge:
+            self.bridge.publish_state(payload)
+        if self.csvlog:
+            self.csvlog.escribe(payload)
 
     def _shutdown(self) -> None:
         log.info("deteniendo el servicio")

@@ -114,5 +114,15 @@ asl:
     vhf: 1001               # Kenwood TK-780, fob en usb-1.1.2
     tx10m: 1002             # TX del repetidor de 10 M, fob en usb-1.1.3
 
+# Registro local de telemetria: un CSV por dia, escrito DIRECTO por el servicio.
+# No pasa por MQTT ni por la red, asi que sobrevive a cualquier corte de enlace.
+# Deja csv_dir vacio o quita la seccion para desactivarlo.
+#
+# OJO: si tenias una captura aparte suscrita al broker escribiendo en la misma
+# carpeta, DESACTIVALA. Dos procesos agregando al mismo archivo lo corrompen.
+telemetria:
+  csv_dir: ""            # p.ej. /home/asl/pruebas-tx
+  csv_prefix: "tx-"
+
 state_file: /var/lib/gabinete-fan/state.json
 log_level: INFO
