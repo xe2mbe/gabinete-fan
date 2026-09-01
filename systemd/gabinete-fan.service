@@ -25,15 +25,21 @@ KillSignal=SIGTERM
 # Endurecimiento. No se usa ProtectSystem=strict porque hace falta escribir en
 # /sys/class/pwm y en /var/lib/gabinete-fan.
 NoNewPrivileges=yes
-# ProtectHome=yes monta /home VACIO y de solo lectura para el servicio. Si
-# apuntas telemetria.csv_dir a un directorio dentro de /home, el servicio no
-# podra escribir ahi y lo unico que veras es un aviso en el journal:
+# ProtectHome=yes monta /home VACIO y de solo lectura para el servicio, asi que
+# telemetria.csv_dir NO puede apuntar a un directorio del home. El sintoma es
+# desconcertante: el servicio arranca bien, anuncia en el journal que inicio el
+# registro, y no escribe una sola fila. El unico rastro es:
 #   no se pudo escribir el CSV ([Errno 30] Read-only file system: '/home/...')
-# La salida es agregar el directorio a ReadWritePaths, que exceptua rutas
-# concretas de ProtectHome. Con systemctl edit gabinete-fan:
-#   [Service]
-#   ReadWritePaths=/home/usuario/telemetria
-# Por omision csv_dir apunta a /var/lib/gabinete-fan, que ya es escribible.
+#
+# ReadWritePaths NO es la salida, aunque la documentacion sugiera que se puede
+# combinar: probado aqui, systemd acepta la directiva pero no llega a crear el
+# punto de montaje y /home sigue siendo un tmpfs vacio de modo 000.
+#
+# La salida es dejar el registro FUERA de /home -por ejemplo en
+# /var/lib/gabinete-fan/telemetria, que StateDirectory ya hace escribible- y,
+# si lo quieres a la mano, poner un enlace simbolico desde tu home. El enlace
+# lo resuelve tu shell, fuera del espacio aislado del servicio, asi que
+# funciona para ti sin que el servicio tenga que entrar a /home.
 ProtectHome=yes
 PrivateTmp=yes
 ProtectKernelModules=yes

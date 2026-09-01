@@ -121,10 +121,12 @@ asl:
 # OJO: si tenias una captura aparte suscrita al broker escribiendo en la misma
 # carpeta, DESACTIVALA. Dos procesos agregando al mismo archivo lo corrompen.
 #
-# La ruta por omision esta dentro de /var/lib/gabinete-fan porque el servicio
-# corre con ProtectHome=yes: cualquier directorio bajo /home le queda de solo
-# lectura. Si prefieres guardarlo en tu home, agrega el directorio a
-# ReadWritePaths en la unidad (ver systemd/gabinete-fan.service).
+# La ruta TIENE que quedar fuera de /home: el servicio corre con
+# ProtectHome=yes y ahi solo ve un sistema de archivos vacio de solo lectura.
+# /var/lib/gabinete-fan ya es escribible gracias a StateDirectory. Si lo
+# quieres a la mano, pon un enlace desde tu home:
+#     ln -s /var/lib/gabinete-fan/telemetria ~/pruebas-tx
+# El enlace lo resuelve tu shell, no el servicio, asi que funciona.
 telemetria:
   csv_dir: ""            # p.ej. /var/lib/gabinete-fan/telemetria
   csv_prefix: "tx-"
