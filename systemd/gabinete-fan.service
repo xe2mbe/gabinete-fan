@@ -25,6 +25,15 @@ KillSignal=SIGTERM
 # Endurecimiento. No se usa ProtectSystem=strict porque hace falta escribir en
 # /sys/class/pwm y en /var/lib/gabinete-fan.
 NoNewPrivileges=yes
+# ProtectHome=yes monta /home VACIO y de solo lectura para el servicio. Si
+# apuntas telemetria.csv_dir a un directorio dentro de /home, el servicio no
+# podra escribir ahi y lo unico que veras es un aviso en el journal:
+#   no se pudo escribir el CSV ([Errno 30] Read-only file system: '/home/...')
+# La salida es agregar el directorio a ReadWritePaths, que exceptua rutas
+# concretas de ProtectHome. Con systemctl edit gabinete-fan:
+#   [Service]
+#   ReadWritePaths=/home/usuario/telemetria
+# Por omision csv_dir apunta a /var/lib/gabinete-fan, que ya es escribible.
 ProtectHome=yes
 PrivateTmp=yes
 ProtectKernelModules=yes

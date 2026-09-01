@@ -120,8 +120,13 @@ asl:
 #
 # OJO: si tenias una captura aparte suscrita al broker escribiendo en la misma
 # carpeta, DESACTIVALA. Dos procesos agregando al mismo archivo lo corrompen.
+#
+# La ruta por omision esta dentro de /var/lib/gabinete-fan porque el servicio
+# corre con ProtectHome=yes: cualquier directorio bajo /home le queda de solo
+# lectura. Si prefieres guardarlo en tu home, agrega el directorio a
+# ReadWritePaths en la unidad (ver systemd/gabinete-fan.service).
 telemetria:
-  csv_dir: ""            # p.ej. /home/asl/pruebas-tx
+  csv_dir: ""            # p.ej. /var/lib/gabinete-fan/telemetria
   csv_prefix: "tx-"
 
 state_file: /var/lib/gabinete-fan/state.json
