@@ -78,10 +78,7 @@ calibrar los umbrales y qué hacer cuando algo no sale— está en
 | **[docs/instalacion.md](docs/instalacion.md)** | Puesta en marcha paso a paso, actualización y solución de problemas |
 | **[docs/arquitectura.md](docs/arquitectura.md)** | Diagramas: máquina de estados, piso de CPU, lazo de control, telemetría |
 | **[docs/hardware.md](docs/hardware.md)** | Cableado, pines, RF, curva medida del ventilador y modos de falla |
-| **[extras/vpn-watchdog](extras/vpn-watchdog/)** | Vigilante del túnel WireGuard, para que la telemetría vuelva sola tras un corte de enlace |
-| **[extras/radio-alerta](extras/radio-alerta/)** | Anuncia la falla de enlace por radio, cuando ya no queda ningún otro canal |
-| **[extras/nodo-watchdog](extras/nodo-watchdog/)** | Detecta que el nodo dejó de responder aunque systemd lo crea vivo, y lo recupera |
-| **[extras/enlace-log](extras/enlace-log/)** | Registra pérdida y latencia del enlace por minuto, para cruzarlas contra el TX |
+| **[extras/](extras/)** | Las cuatro piezas que rodean al control térmico: túnel, anuncios por radio, salud del nodo y calidad del enlace. Empieza por aquí para ver cómo encajan |
 
 ## Comandos
 

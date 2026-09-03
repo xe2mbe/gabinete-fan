@@ -202,6 +202,19 @@ deje de reportar el límite térmico.
 
 ---
 
+## Y después: las piezas de alrededor
+
+El control térmico es una parte. Un nodo en torre falla de otras formas —el
+enlace se cae, el túnel no vuelve, el nodo se traba pareciendo vivo— y en
+**[extras/](../extras/)** están las piezas que cubren cada caso, todas nacidas
+de fallas reales de este despliegue.
+
+Ahí encontrarás también el ajuste que conviene hacer **antes que ninguno**:
+dejar el journal persistente. Sin eso, cada falla en un sitio remoto te deja
+adivinando, porque los registros se pierden justo al reiniciar.
+
+---
+
 ## Actualizar
 
 ```bash
