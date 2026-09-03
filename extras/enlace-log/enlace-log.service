@@ -1,0 +1,17 @@
+[Unit]
+Description=Registro continuo de calidad del enlace (perdida y latencia)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/enlace-log.sh
+Restart=always
+RestartSec=10
+# Escribe en el mismo directorio que la telemetria termica, para poder cruzar
+# ambos registros. No puede ser un directorio del home: ProtectHome lo tapa.
+StateDirectory=gabinete-fan
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
