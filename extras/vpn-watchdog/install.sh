@@ -13,7 +13,10 @@ install -m 755 "$SRC/vpn-watchdog.sh" /usr/local/sbin/vpn-watchdog.sh
 install -m 644 "$SRC/vpn-watchdog.service" /etc/systemd/system/
 install -m 644 "$SRC/vpn-watchdog.timer" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now vpn-watchdog.timer
+systemctl enable vpn-watchdog.timer
+# --now no basta al ACTUALIZAR: si el servicio ya corria, seguiria
+# ejecutando el archivo viejo desde su descriptor abierto.
+systemctl restart vpn-watchdog.timer
 
 echo
 echo "Instalado. El vigilante revisa el tunel cada minuto."

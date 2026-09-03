@@ -9,7 +9,10 @@ install -m 755 "$SRC/nodo-watchdog.sh" /usr/local/sbin/nodo-watchdog.sh
 install -m 644 "$SRC/nodo-watchdog.service" /etc/systemd/system/
 install -m 644 "$SRC/nodo-watchdog.timer" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now nodo-watchdog.timer
+systemctl enable nodo-watchdog.timer
+# --now no basta al ACTUALIZAR: si el servicio ya corria, seguiria
+# ejecutando el archivo viejo desde su descriptor abierto.
+systemctl restart nodo-watchdog.timer
 
 cat <<FIN
 

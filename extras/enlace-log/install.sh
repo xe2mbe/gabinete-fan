@@ -9,7 +9,10 @@ install -m 755 "$SRC/enlace-log.py" /usr/local/sbin/enlace-log.py
 install -m 644 "$SRC/enlace-log.service" /etc/systemd/system/
 install -d -o root -g asl -m 775 /var/lib/gabinete-fan/telemetria
 systemctl daemon-reload
-systemctl enable --now enlace-log.service
+systemctl enable enlace-log.service
+# --now no basta al ACTUALIZAR: si el servicio ya corria, seguiria
+# ejecutando el archivo viejo desde su descriptor abierto.
+systemctl restart enlace-log.service
 sleep 65
 cat <<FIN
 
