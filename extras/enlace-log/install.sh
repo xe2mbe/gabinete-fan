@@ -4,7 +4,8 @@
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Corre este script con sudo." >&2; exit 1; }
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-install -m 755 "$SRC/enlace-log.sh" /usr/local/sbin/enlace-log.sh
+rm -f /usr/local/sbin/enlace-log.sh   # version vieja en awk
+install -m 755 "$SRC/enlace-log.py" /usr/local/sbin/enlace-log.py
 install -m 644 "$SRC/enlace-log.service" /etc/systemd/system/
 install -d -o root -g asl -m 775 /var/lib/gabinete-fan/telemetria
 systemctl daemon-reload

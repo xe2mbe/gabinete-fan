@@ -47,10 +47,18 @@ cd extras/enlace-log
 sudo ./install.sh
 ```
 
-## Un detalle que costó un error
+## Dos trampas que costaron caro
 
-Las líneas de paquete perdido de `ping -D` dicen `no answer yet for
-icmp_seq=123`, y **contienen `icmp_seq`**. Contar los recibidos buscando esa
-cadena reportaba 0 % de pérdida siempre — exactamente lo contrario de la
-verdad, y de forma silenciosa. Se cuentan buscando `time=`, que solo aparece en
-las respuestas reales.
+**Contar mal las pérdidas.** Las líneas de paquete perdido de `ping -D` dicen
+`no answer yet for icmp_seq=123`, y **contienen `icmp_seq`**. Contar los
+recibidos buscando esa cadena reportaba 0 % de pérdida siempre — exactamente lo
+contrario de la verdad, y en silencio. Se cuentan buscando `time=`, que solo
+aparece en las respuestas reales.
+
+**Por qué está en Python y no en `awk`.** La primera versión era un pipeline
+`ping | awk`. En el escritorio funcionaba; en la Pi el proceso `awk` ni
+siquiera quedaba corriendo, y el servicio reportaba `active` sin escribir una
+sola fila. Un agregador que falla en silencio es peor que no tenerlo. Python ya
+está en la Pi, lo usa el resto del proyecto, y sobre todo **se puede probar**:
+el parser se ejercita con líneas simuladas, incluido el corte total, sin
+necesidad de esperar a que el enlace falle de verdad.
