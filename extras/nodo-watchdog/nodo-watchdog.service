@@ -1,0 +1,7 @@
+[Unit]
+Description=Revision de vida del nodo AllStar (Asterisk responde?)
+After=asterisk.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nodo-watchdog.sh

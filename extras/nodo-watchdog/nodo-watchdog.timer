@@ -1,0 +1,12 @@
+[Unit]
+Description=Revisa cada minuto que el nodo siga respondiendo
+
+[Timer]
+# Margen tras el arranque: Asterisk tarda en levantar los canales USB y no
+# tiene caso acusarlo de atascado mientras todavia esta iniciando.
+OnBootSec=3min
+OnUnitActiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target
